@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phonics Ghibli Luxury 3D</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #121c15; 
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas { 
+            box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+        }
+        /* บังคับดักให้เบราว์เซอร์โหลดฟอนต์ไอติมมารอก่อนเกมเริ่ม */
+        .font-loader {
+            font-family: 'Itim';
+            position: absolute;
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="font-loader">คลังคำศัพท์ภาษาไทยอังกฤษ</div>
+
+<script>
+// --- บังคับขนาดหน้าจอแนวตั้งสัดส่วนกระดาษ A4 (595 x 841) ---
+const config = {
+    type: Phaser.AUTO,
+    width: 595,
+    height: 841,
+    physics: {
+        default: 'arcade',
+        arcade: { gravity: { y: 0 }, debug: false }
+    },
+    scene: { preload: preload, create: create, update: update }
+};
+
+const game = new Phaser.Game(config);
+let score = 0;
+let scoreText;
+let targetText;
+let currentTarget = 'it';
+let spawnTimer;
+
+const wordsIT = ['sit', 'hit', 'fit', 'bit', 'pit'];
+const wordsIG = ['pig', 'dig', 'big', 'wig', 'fig'];
+
+function preload() {}
+
+function create() {
+    let scene = this;
+
+    // 🎨 1. วาดกราฟิกสดสไตล์ GHIBLI 3D
+    let bgGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+    bgGraphics.fillGradientStyle(0xdcf5e9, 0xdcf5e9, 0xbbe3d1, 0xbbe3d1, 1);
+    bgGraphics.fillRect(0, 0, 595, 841);
+    bgGraphics.generateTexture('ghibli_sky', 595, 841);
+    this.add.image(297, 420, 'ghibli_sky');
+
+    // วาดหัวเห็ด 3D มิติตระกูล -it (สีแดงมะเขือเทศ)
+    let m1 = this.make.graphics({ x: 0, y: 0, add: false });
+    m1.fillStyle(0xfc5c65, 1); 
+    m1.fillEllipse(30, 25, 60, 45);
+    m1.fillStyle(0xffffff, 1); 
+    m1.fillCircle(18, 18, 5);
+    m1.fillCircle(42, 20, 6);
+    m1.fillCircle(30, 32, 4);
+    m1.fillStyle(0xfff5db, 1); 
+    m1.fillRoundedRect(22, 35, 16, 25, 6);
+    m1.generateTexture('m_red', 60, 60);
+
+    // วาดผลไม้ป่า 3D มิติตระกูล -ig (สีเขียวพาสเทล)
+    let m2 = this.make.graphics({ x: 0, y: 0, add: false });
+    m2.fillStyle(0x2bcbba, 1); 
+    m2.fillCircle(30, 32, 24);
+    m2.fillStyle(0x26de81, 1); 
+    m2.fillEllipse(30, 10, 14, 8);
+    m2.fillStyle(0xffffff, 0.4); 
+    m2.fillCircle(20, 24, 5);
+    m2.generateTexture('m_green', 60, 60);
+
+    // 📊 2. ออกแบบแถบ UI ด้านบน (คุมโทนเรียบหรูสไตล์ Ghibli)
+    let topBar = this.add.graphics();
+    topBar.fillStyle(0xffffff, 0.75);
+    topBar.fillRoundedRect(25, 25, 545, 150, 18);
+
+    // ตั้งค่าตัวหนังสือคะแนนสะสม (ใช้ระบบเจาะจงฟอนต์ 'Itim')
+    scoreText = this.add.text(50, 45, 'คะแนนสะสม: 0', { 
+        fontFamily: 'Itim', 
+        fontSize: '32px', 
+        fill: '#1b4332', 
+        style: 'bold'
+    });
+
+    // โจทย์คำสั่งตัวใหญ่ๆ ชัดเจน อยู่ตรงกลางบาร์พอดี
+    targetText = this.add.text(297, 125, '✨ ไหนลองจิ้มคำเสียง: -it ✨', { 
+        fontFamily: 'Itim', 
+        fontSize: '36px', 
+        fill: '#123224', 
+        style: 'bold'
+    }).setOrigin(0.5);
+
+    changeTargetSound();
+
+    // 🍄 3. กลุ่มไอเทมเห็ดลอยฟ้า
+    mushrooms = this.physics.add.group();
+
+    // สุ่มปล่อยไอเทมลอยละล่องขึ้นมา
+    spawnTimer = this.time.addEvent({
+        delay: 1300,
+        callback: spawnGhibliObject,
+        callbackScope: this,
+        loop: true
+    });
+}
+
+function update() {}
+
+function spawnGhibliObject() {
+    let scene = this;
+    let x = Phaser.Math.Between(70, 525); 
+    let y = 860;
+
+    let type = Phaser.Math.Between(0, 1) === 0 ? 'it' : 'ig';
+    let texture = type === 'it' ? 'm_red' : 'm_green';
+    let word = type === 'it' ? Phaser.Utils.Array.GetRandom(wordsIT) : Phaser.Utils.Array.GetRandom(wordsIG);
+
+    let obj = this.physics.add.image(x, y, texture);
+    obj.setData('phonics_type', type);
+    obj.setInteractive();
+    obj.setVelocityY(Phaser.Math.Between(-220, -350)); // ความเร็วนุ่มนวล สไตล์ผ่อนคลาย
+
+    // 📝 คำศัพท์บนหัวเห็ด มีกล่องโค้งสีขาวรองก้นให้อ่านง่ายสุดๆ ด้วยฟอนต์ไอติม
+    let textObj = this.add.text(x, y, word, {
+        fontFamily: 'Itim',
+        fontSize: '34px',
+        fill: '#1b4332',
+        backgroundColor: '#ffffff',
+        padding: { x: 14, y: 5 },
+    }).setOrigin(0.5);
+
+    // เมื่อเด็กใช้นิ้วสัมผัสจิ้มเห็ดบนหน้าจอ iPad
+    obj.on('pointerdown', function() {
+        if (obj.getData('phonics_type') === currentTarget) {
+            score += 10;
+            scoreText.setText('คะแนนสะสม: ' + score);
+            
+            let eff = scene.add.text(obj.x, obj.y, 'เก่งมากครับ! 🌟', { 
+                fontFamily: 'Itim', fontSize: '36px', fill: '#2d5a27', style: 'bold'
+            }).setOrigin(0.5);
+            scene.time.delayedCall(600, () => { eff.destroy(); });
+
+            changeTargetSound();
+        } else {
+            score -= 5;
+            if (score < 0) score = 0;
+            scoreText.setText('คะแนนสะสม: ' + score);
+
+            let eff = scene.add.text(obj.x, obj.y, 'ลองดูอีกทีนะคราบบบ 🍃', { 
+                fontFamily: 'Itim', fontSize: '30px', fill: '#e55039', style: 'bold'
+            }).setOrigin(0.5);
+            scene.time.delayedCall(600, () => { eff.destroy(); });
+        }
+
+        textObj.destroy();
+        obj.destroy();
+    });
+
+    // ทวีลสั่งให้ไอเทมและตัวหนังสือลอยพลิ้วขึ้นสู่ด้านบนพร้อมๆ กัน
+    this.tweens.add({
+        targets: [obj, textObj],
+        y: -100,
+        duration: 6500,
+        onUpdate: function() {
+            if (obj.active) {
+                textObj.setPosition(obj.x, obj.y - 50);
+            }
+        },
+        onComplete: function() {
+            obj.destroy();
+            textObj.destroy();
+        }
+    });
+}
+
+function changeTargetSound() {
+    currentTarget = Phaser.Math.Between(0, 1) === 0 ? 'it' : 'ig';
+    targetText.setText('✨ ไหนลองจิ้มคำเสียง: -' + currentTarget + ' ✨');
+}
+</script>
+
+</body>
+</html>
