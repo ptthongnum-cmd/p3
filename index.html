@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Phonics AR Ghibli Landscape</title>
+    <title>Phonics AR Ghibli Landscape v2</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     
     <style>
         body { 
@@ -18,23 +18,25 @@
             overflow: hidden; 
             font-family: 'Itim', cursive;
             background-color: #000;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
-        /* 📊 จัดแถบดีไซน์หน้าจอแนวนอนหรูหราสไตล์จิบลิ ไม่ซ้อนไม่ทับกัน */
+        /* 📊 แถบ UI แนวนอนสไตล์หรูหรา คลีนตา ไม่ซ้อนกันเด็ดขาด */
         #ui-container {
             position: absolute;
-            top: 25px;
+            top: 20px;
             left: 0;
             width: 100%;
             display: flex;
             justify-content: space-between;
             padding: 0 40px;
             box-sizing: border-box;
-            z-index: 9999;
+            z-index: 99999;
             pointer-events: none;
         }
         .ui-box {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.9);
             padding: 12px 28px;
             border-radius: 30px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -48,16 +50,24 @@
             color: #123224;
             background: rgba(255, 245, 204, 0.95);
         }
+        /* ตัวแฝงดักโหลดฟอนต์ไอติมให้เบราว์เซอร์รู้จักตั้งแต่แรก */
+        .font-preload {
+            position: absolute;
+            visibility: hidden;
+            font-family: 'Itim';
+        }
     </style>
 </head>
 <body>
+
+    <div class="font-preload">ดักโหลดฟอนต์ไอติม</div>
 
     <div id="ui-container">
         <div class="ui-box" id="score-box">คะแนนสะสม: 0</div>
         <div class="ui-box" id="target-box">🌿 ส่องกล้องจิ้มเสียง: -it 🌿</div>
     </div>
 
-    <a-scene embedded arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;" cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+    <a-scene embedded arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;" cursor="rayOrigin: mouse;" raycaster="objects: .clickable">
         
         <a-ambient-light color="#fff5cc" intensity="0.8"></a-ambient-light>
         <a-directional-light color="#ffffff" intensity="0.6" position="-1 2 1"></a-directional-light>
@@ -80,32 +90,32 @@ function changeTargetSound() {
     targetBox.innerHTML = `🌿 ส่องกล้องจิ้มเสียง: -${currentTarget} 🌿`;
 }
 
-// 🍄 ระบบลูปปล่อยเห็ดและผลไม้ 3D ให้ค่อยๆ เกิดขึ้นรอบตัวนักเรียน
+// 🍄 ระบบลูปเสกเห็ดเวทมนตร์ 3D ลอยขึ้นมาในโลกจริง ทุกๆ 2.2 วินาที
 setInterval(() => {
     if (!sceneEl) return;
 
     const type = Math.random() > 0.5 ? 'it' : 'ig';
     const word = type === 'it' ? wordsIT[Math.floor(Math.random() * wordsIT.length)] : wordsIG[Math.floor(Math.random() * wordsIG.length)];
-    const capColor = type === 'it' ? '#fc5c65' : '#2bcbba'; // แดงมะเขือเทศฉ่ำเงา หรือ เขียวชาเลมอนละมุนใจ
+    const capColor = type === 'it' ? '#fc5c65' : '#2bcbba'; // แดงมะเขือเทศ หรือ เขียวพาสเทลจิบลิ
 
     const entity = document.createElement('a-entity');
     
-    // คำนวณให้เห็ดกระจายตัวลอยอยู่รอบๆ ในระนาบสายตาเด็กๆ ถือแนวนอนส่องสบาย
-    const posX = (Math.random() - 0.5) * 8; 
-    const posY = (Math.random() - 0.5) * 4 + 1.2; 
-    const posZ = -4.5; // ระยะห่างกำลังพอดีนิ้วจิ้ม
+    // คำนวณพิกัดให้กระจายตัวอยู่รอบตัวเด็กๆ ในระยะสายตาพอดีนิ้วเอื้อมจิ้ม
+    const posX = (Math.random() - 0.5) * 7; 
+    const posY = (Math.random() - 0.5) * 3 + 1.0; 
+    const posZ = -4.0; // ห่างจากหน้าจอ 4 เมตร กำลังคมชัด
     
     entity.setAttribute('position', `${posX} ${posY} ${posZ}`);
     entity.setAttribute('class', 'clickable');
 
-    // วาดหมวกเห็ดทรงกลมมน 3D อบอุ่น
+    // วาดหมวกเห็ด 3D ทรงมนไล่แสงเงา
     const mushroomCap = document.createElement('a-sphere');
     mushroomCap.setAttribute('radius', '0.45');
     mushroomCap.setAttribute('color', capColor);
     mushroomCap.setAttribute('scale', '1 0.65 1');
     entity.appendChild(mushroomCap);
 
-    // วาดก้านเห็ดสีครีมละมุน
+    // วาดก้านเห็ดนุ่มนิ่มสีครีม
     const mushroomStem = document.createElement('a-cylinder');
     mushroomStem.setAttribute('radius', '0.12');
     mushroomStem.setAttribute('height', '0.45');
@@ -113,12 +123,56 @@ setInterval(() => {
     mushroomStem.setAttribute('position', '0 -0.35 0');
     entity.appendChild(mushroomStem);
 
-    // 📝 ป้ายคำศัพท์ฟอนต์คลาสสิกขอบมน มีมิติ
+    // 📝 แผ่นป้ายรองพื้นสีขาวเพื่อให้อ่านคำศัพท์ฟอนต์ไอติมได้ง่าย ไม่กลืนไปกับฉากห้องเรียน
+    const bgPlane = document.createElement('a-plane');
+    bgPlane.setAttribute('width', '1.4');
+    bgPlane.setAttribute('height', '0.45');
+    bgPlane.setAttribute('color', '#ffffff');
+    bgPlane.setAttribute('position', '0 0.65 -0.02');
+    entity.appendChild(bgPlane);
+
+    // ตัวอักษรคำศัพท์ Phonics คมชัดลอยเด่น
     const label = document.createElement('a-entity');
     label.setAttribute('text', {
         value: word,
         align: 'center',
-        width: 6.5,
+        width: 7,
         color: '#1b4332'
     });
     label.setAttribute('position', '0 0.65 0');
+    entity.appendChild(label);
+
+    // 🌪️ เอฟเฟกต์แอนิเมชันหมุนร่อนพลิ้วไหวช้าๆ สไตล์ธรรมชาติในป่าลึก
+    entity.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 7500; easing: linear');
+
+    // 👆 ระบบตรวจจับการใช้นิ้วแปะสัมผัส (แก้บั๊กสำหรับ iPad iOS เรียบร้อย)
+    entity.addEventListener('click', function () {
+        if (type === currentTarget) {
+            score += 10;
+            scoreBox.innerHTML = `คะแนนสะสม: ${score} 🎉`;
+            scoreBox.style.background = '#dcf5e9';
+            setTimeout(() => { scoreBox.style.background = 'rgba(255, 255, 255, 0.9)'; }, 400);
+            changeTargetSound();
+        } else {
+            score -= 5;
+            if (score < 0) score = 0;
+            scoreBox.innerHTML = `คะแนนสะสม: ${score}`;
+            scoreBox.style.background = '#ff9999';
+            setTimeout(() => { scoreBox.style.background = 'rgba(255, 255, 255, 0.9)'; }, 400);
+        }
+        
+        // จิ้มเสร็จแล้วเห็ดสลายหายไปทันที
+        if(entity.parentNode) entity.parentNode.removeChild(entity);
+    });
+
+    // ถ้าไม่มีคนจิ้มใน 9 วินาที ให้ลบตัวเองทิ้งเพื่อเคลียร์หน่วยความจำเครื่อง
+    setTimeout(() => {
+        if (entity.parentNode) entity.parentNode.removeChild(entity);
+    }, 9000);
+
+    sceneEl.appendChild(entity);
+}, 2200);
+</script>
+
+</body>
+</html>
