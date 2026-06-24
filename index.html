@@ -104,4 +104,59 @@ setInterval(() => {
     mushroomStem.setAttribute('position', '0 -0.3 0');
     entity.appendChild(mushroomStem);
 
-    // 📝 ป
+    // 📝 ป้ายคำศัพท์ฟอนต์ไอติมสีเขียวเข้ม พื้นหลังขาวลอยเด่นเหนือกองเห็ด
+    const label = document.createElement('a-entity');
+    label.setAttribute('text', {
+        value: word,
+        font: 'https://cdn.aframe.io/fonts/A-Frame-font.json', // ฟอนต์มาตรฐาน 3D คลีนๆ
+        align: 'center',
+        width: 6,
+        color: '#1b4332'
+    });
+    label.setAttribute('position', '0 0.6 0');
+    
+    // สร้างแผ่นหลังสีขาวมารองพื้นอักษรให้อ่านง่าย
+    const bgPlane = document.createElement('a-plane');
+    bgPlane.setAttribute('width', '1.2');
+    bgPlane.setAttribute('height', '0.4');
+    bgPlane.setAttribute('color', '#ffffff');
+    bgPlane.setAttribute('position', '0 0.6 -0.01');
+    entity.appendChild(bgPlane);
+    entity.appendChild(label);
+
+    // ✨ อนิเมชั่นให้เห็ดลอยหมุนช้าๆ นุ่มนวล สไตล์จิบลิ
+    entity.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear');
+
+    // 👆 เมื่อเด็กๆ ใช้นิ้วแปะทัชที่ตัวเห็ดบนจอ iPad
+    entity.addEventListener('click', function () {
+        if (type === currentTarget) {
+            score += 10;
+            scoreBox.innerHTML = `คะแนนสะสม: ${score} 🎉`;
+            scoreBox.style.background = '#dcf5e9';
+            setTimeout(() => { scoreBox.style.background = 'rgba(255, 255, 255, 0.85)'; }, 500);
+            changeTargetSound();
+        } else {
+            score -= 5;
+            if (score < 0) score = 0;
+            scoreBox.innerHTML = `คะแนนสะสม: ${score}`;
+            scoreBox.style.background = '#ff9999';
+            setTimeout(() => { scoreBox.style.background = 'rgba(255, 255, 255, 0.85)'; }, 500);
+        }
+        
+        // จิ้มเสร็จแล้วเห็ดสลายหายไป
+        entity.parentNode.removeChild(entity);
+    });
+
+    // ถ้าปล่อยไว้ 8 วินาทีแล้วไม่มีคนจิ้ม ให้เห็ดหายไปเองเพื่อไม่ให้รกห้องเรียน
+    setTimeout(() => {
+        if (entity.parentNode) {
+            entity.parentNode.removeChild(entity);
+        }
+    }, 8000);
+
+    sceneEl.appendChild(entity);
+}, 2000);
+</script>
+
+</body>
+</html>
